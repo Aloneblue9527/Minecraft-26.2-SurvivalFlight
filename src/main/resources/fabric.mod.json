@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "survivalflight",
+  "version": "1.0.0",
+  "name": "SurvivalFlight",
+  "description": "Client-side building flight for agreed private worlds.",
+  "environment": "client",
+  "license": "MIT",
+  "entrypoints": {
+    "client": [
+      "dev.survivalflight.SurvivalFlightClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
