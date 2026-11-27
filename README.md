@@ -15,7 +15,7 @@ Use only in private worlds with the host's permission. v1.1.0 is a **pre-release
 
 Flight starts **OFF**. Press **F7** to enable flight permission, then **double-tap Space** to enter vanilla creative flight. WASD moves horizontally, Space ascends, Shift descends. Double-tap Space again to stop flying, or F7 to turn the feature off. Remap F7 under vanilla **Options → Controls → Key Binds → Miscellaneous**.
 
-The mod never changes flight speed, sprint handling, collision, health, hunger, inventory, or block interactions. Vanilla creative movement remains responsible for hovering and movement. Normal survival permissions still apply to building.
+The mod never changes flight speed, sprint handling, collision, health, hunger, or inventory. Survival building permissions, tool drops and other interactions remain vanilla. Vanilla creative movement remains responsible for hovering and movement. Normal survival permissions still apply to building.
 
 Only the vanilla Action Bar is used, with English and Simplified Chinese translations:
 
