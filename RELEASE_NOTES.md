@@ -22,7 +22,7 @@ Disabling or losing flight, descending/landing, server corrections, ability upda
 
 **Real remote multiplayer, the user's virtual LAN, and Kaspersky behavior are unverified.** This is a pre-release, not a fully stable release. No antivirus software needs to be disabled and no exclusion should be added.
 
-Build, automated checks and cloud client-load evidence are separately reported in [VALIDATION.md](VALIDATION.md). The release workflow only publishes after its Gradle checks and archive inspection pass. The checksum is calculated from the attached JAR, not an estimated value.
+Build, automated checks and cloud client-load evidence are separately reported in [VALIDATION.md](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/blob/v1.0.0/VALIDATION.md). The release workflow only publishes after its Gradle checks and archive inspection pass. The checksum is calculated from the attached JAR, not an estimated value.
 
 ## 简体中文
 

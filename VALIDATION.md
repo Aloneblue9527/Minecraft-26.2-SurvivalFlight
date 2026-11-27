@@ -13,6 +13,8 @@ The official game JARs were downloaded using Mojang's manifest and checked again
 | Check | Result |
 | --- | --- |
 | Actual `./gradlew clean build --no-daemon` with Java 25 | PASS |
+| GitHub Actions push and pull-request builds | PASS — [push](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/runs/45987602666), [PR](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/runs/45987680428) |
+| Cloud vs downloaded GitHub Actions installable JAR | PASS — byte-for-byte identical |
 | Dependency-free flight flag regression checks | PASS — 10 assertions |
 | Installable archive metadata, expected members, language keys, Mixin and Java 25 bytecode | PASS |
 | No nested dependencies, native payloads or test classes in installable JAR | PASS |
@@ -24,6 +26,12 @@ The official game JARs were downloaded using Mojang's manifest and checked again
 The 10 automated assertions cover default OFF, permission without automatic takeoff, restoring survival flags, repeated cleanup, preserving an existing flight grant, respecting new server grants/revocations, fresh player baselines, isolation of old/new player flags, and duplicate-enable rejection. These are **flight-flag ownership tests**, not a complete simulated Minecraft lifecycle suite.
 
 `tools/verify_jar.py` checks an exact list of 11 archive files, Java class major version 69, metadata and selected prohibited API references. Manual review separately covered all source and build scripts. See [SECURITY.md](SECURITY.md).
+
+Verified installable JAR SHA-256 (cloud and independent Actions build):
+
+```text
+cbce79befc1db270c862f04b06375bb7dacccca4c8668aaa71032fbe96540c27
+```
 
 ## Actual production-JAR client smoke test
 
