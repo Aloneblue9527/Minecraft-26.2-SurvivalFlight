@@ -2,7 +2,7 @@ plugins {
     id 'net.fabricmc.fabric-loom' version '1.17.21'
 }
 
-version = '1.0.0'
+version = providers.gradleProperty('mod_version').get()
 group = 'dev.survivalflight'
 base { archivesName = 'survivalflight-26.2' }
 
@@ -49,3 +49,19 @@ tasks.register('flightSessionTest', JavaExec) {
     mainClass = 'dev.survivalflight.FlightSessionTest'
 }
 tasks.named('check') { dependsOn tasks.named('flightSessionTest') }
+
+// Explicit opt-in integration fixture, never included in build/libs or a release.
+sourceSets {
+    smokeTest {
+        java.srcDir 'src/smokeTest/java'
+        resources.setSrcDirs(['src/smokeTest/resources'])
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+tasks.register('smokeTestJar', Jar) {
+    dependsOn tasks.named('smokeTestClasses')
+    from sourceSets.smokeTest.output
+    archiveFileName = 'survivalflight-smoketest.jar'
+    destinationDirectory = layout.buildDirectory.dir('smoke-test')
+}

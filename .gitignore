@@ -7,3 +7,4 @@ run/
 hs_err_pid*
 replay_pid*
 .mixin.out/
+logs/

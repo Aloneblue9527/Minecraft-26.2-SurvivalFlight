@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import org.lwjgl.glfw.GLFW;
 
@@ -16,6 +17,7 @@ import org.lwjgl.glfw.GLFW;
 public final class SurvivalFlightClient implements ClientModInitializer {
     private static SurvivalFlightClient instance;
     private final FlightSession session = new FlightSession();
+    private final FlightSafety safety = new FlightSafety();
     private KeyMapping toggle;
     private LocalPlayer owner;
     private Object level;
@@ -33,6 +35,7 @@ public final class SurvivalFlightClient implements ClientModInitializer {
 
     private void reset() {
         session.disable();
+        safety.reset();
         owner = null;
         level = null;
         mode = null;
@@ -44,6 +47,7 @@ public final class SurvivalFlightClient implements ClientModInitializer {
         if (instance == null) return;
         boolean active = instance.session.enabled();
         instance.session.forget();
+        instance.safety.reset();
         instance.wasFlying = false;
         LocalPlayer player = Minecraft.getInstance().player;
         if (active && player != null) {
@@ -55,6 +59,33 @@ public final class SurvivalFlightClient implements ClientModInitializer {
     private static boolean airborne(LocalPlayer player) {
         // Warn conservatively even just above the ground; no fall-safety claim is made.
         return !player.onGround() && !player.isSpectator();
+    }
+
+    private boolean eligible(LocalPlayer player) {
+        Minecraft client = Minecraft.getInstance();
+        return player != null && player == owner && player == client.player
+                && client.level == level && client.gameMode != null
+                && client.gameMode.getPlayerMode() == GameType.SURVIVAL
+                && mode == GameType.SURVIVAL && player.isAlive()
+                && !player.isPassenger() && !player.isFallFlying()
+                && !player.isInWater() && !player.isInLava();
+    }
+
+    public static boolean miningAssistActive(Player player) {
+        if (instance == null || player != instance.owner) return false;
+        LocalPlayer local = instance.owner;
+        return instance.session.enabled() && instance.eligible(local)
+                && local.getAbilities().flying && local.getY() >= local.level().getMinY();
+    }
+
+    public static boolean reportGrounded() {
+        // Shared packet classes may also be decoded by an integrated server/Netty thread.
+        // Never change those packets (including packets belonging to another player).
+        if (instance == null || !Minecraft.getInstance().isSameThread()
+                || !instance.eligible(instance.owner)) return false;
+        LocalPlayer player = instance.owner;
+        return instance.safety.protects(instance.session.enabled(), player.getAbilities().flying,
+                true, player.getY(), player.level().getMinY());
     }
 
     private static void message(LocalPlayer player, String key) {
@@ -70,6 +101,7 @@ public final class SurvivalFlightClient implements ClientModInitializer {
             // Vanilla already assigned the native mode's flags: never overwrite them.
             if (player == owner && nativeFlight) session.forget();
             else session.disable();
+            safety.reset();
             owner = player;
             level = client.level;
             mode = currentMode;
@@ -81,10 +113,13 @@ public final class SurvivalFlightClient implements ClientModInitializer {
         }
         if (player == null || client.level == null || !player.isAlive() || currentMode != GameType.SURVIVAL) {
             session.disable();
+            safety.reset();
             wasFlying = false;
             while (toggle.consumeClick()) { }
             return;
         }
+        if (eligible(player)) safety.observe(session.enabled(), player.getAbilities().flying, player.onGround());
+        else safety.reset();
         while (toggle.consumeClick()) {
             if (client.gui.screen() != null) continue;
             if (session.enabled()) {

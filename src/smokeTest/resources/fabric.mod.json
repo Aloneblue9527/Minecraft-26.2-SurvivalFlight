@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"survivalflight_smoketest","version":"1.0.0","environment":"client","license":"MIT","name":"Disposable SurvivalFlight integration fixture","entrypoints":{"client":["dev.survivalflight.smoke.SmokeTest"]},"depends":{"survivalflight":"1.1.0","fabric-api":"*"}}

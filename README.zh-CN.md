@@ -3,19 +3,19 @@
 [English](README.md) · [下载预发布版本](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/releases) · [云端构建](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/workflows/build.yml)
 
 **Minecraft 26.2 / Fabric / Java 25 的轻量客户端建筑飞行辅助。**
-仅用于房主许可的私人世界。v1.0.0 为 **Experimental 预发布版**，真实远程多人联机尚未验证。客户端飞行不等于服务端授权飞行，也不提供可靠免坠落伤害。
+仅用于房主许可的私人世界。v1.1.0 为 **Experimental 预发布版**，真实远程多人联机尚未验证。客户端飞行不等于服务端授权飞行；防摔为实验性功能，不能保证所有服务端免伤。
 
 ## 安装与使用
 
 1. 启动器选择 **Minecraft Java 26.2**，安装 **Fabric Loader 0.20.1 或更高版本**。
 2. 安装对应 26.2 的 **Fabric API 0.161.0+26.2**。
-3. 从 Release 下载 `survivalflight-26.2-1.0.0.jar`，放进**你自己客户端**的 `mods` 文件夹。不要安装 `-sources.jar`。
-4. 用 Release 的 `SHA256SUMS` 核对指纹。Windows PowerShell：`Get-FileHash .\survivalflight-26.2-1.0.0.jar -Algorithm SHA256`。
+3. 从 Release 下载 `survivalflight-26.2-1.1.0.jar`，放进**你自己客户端**的 `mods` 文件夹。不要安装 `-sources.jar`。
+4. 用 Release 的 `SHA256SUMS` 核对指纹。Windows PowerShell：`Get-FileHash .\survivalflight-26.2-1.1.0.jar -Algorithm SHA256`。
 5. 加入获许可的私人世界。房主**不需要安装此 Mod**。
 
 默认关闭。按 **F7** 开启飞行权限，再**双击空格**进入原版创造飞行。WASD 水平移动，空格上升，Shift 下降。再次双击空格停止飞行，或按 F7 关闭功能。可在原版“选项 → 控制 → 按键绑定 → 杂项”中修改快捷键。
 
-移动、悬停和速度交给原版处理；Mod 不修改飞行速度或冲刺处理，不改变碰撞、生命值、饥饿值、物品栏、方块交互或生存建筑权限。没有额外加速。
+移动、悬停和速度交给原版处理；Mod 不修改飞行速度或冲刺处理，不改变碰撞、生命值、饥饿值、物品栏、生存建筑权限或工具掉落规则。飞行挖掘速度修正见下文。没有额外加速。
 
 界面仅用原版 Action Bar，提供简体中文和英文。英文状态为：
 
@@ -27,7 +27,17 @@
 
 ## Anti-Kick 与 NoFall 的实际限制
 
-原实现每隔一段时间强制下沉，并发送虚假的 `onGround=true` 封包、清零客户端坠落距离。它们会干扰悬停，且无法证明服务端免伤或不会踢人，现已移除。本 Mod 不发送自定义移动封包，不清零客户端坠落距离。
+### 1.1.0：飞行挖掘与实验性防摔
+
+实际使用本 Mod 飞行时，取消原版空中挖掘的 ÷5 惩罚，使用同工具的地面生存挖掘速度。工具、附魔、挖掘疲劳和水下规则保留。
+
+飞行及随后落地保护期间，正常移动封包的着地标志会报告为 true，使原版服务端能够据此处理挖掘与落地。实际飞行中开始/完成破坏方块前，还会各发送一次着地状态，使服务端按一致状态计算该操作；除此以外保留原版移动封包频率。客户端真实着地状态、移动向量、飞行速度、生命值和伤害处理不变。不强制下沉，不清零客户端坠落距离。
+
+防摔在真正进入飞行后启用，空中按 F7 关闭后会继续尝试保护到本次落地；落地、进入水/熔岩、骑乘/滑翔、死亡、断线、切换世界/维度/模式或收到能力同步时清除。仅按 F7、尚未实际飞行时的普通跳跃不会启用此保护。由于服务端仍可能拒绝或纠正报告，坠落警告会保留。
+
+**主世界、下界、末地的虚空伤害保持原版，仍会扣血死亡。** 低于当前世界 `getMinY()` 时停止修正着地报告；不改任何维度的无敌或伤害处理。原版虚空检测独立于落地与摔落距离。
+
+这次按飞行挖掘/防摔需求加入了范围受限的实验性着地报告修正，不是通用反作弊绕过。延迟、启用前已经积累的摔落距离、服务端纠正和其他服务端行为仍可能造成伤害或死亡。请先在备份的临时世界验证。
 
 已检查原版 26.2 实际字节码：
 
@@ -37,7 +47,7 @@
 - 服务端负责计算坠落伤害。`allow-flight=true` 只是关闭悬空踢出检查，**不保证生存模式坠落免伤**。下降、着地、F7 关闭、死亡、切换维度、能力同步、断线或高空重连都可能受伤甚至死亡。
 - 网络延迟、移动纠正、其他 Mod 和服务器配置仍可能打断飞行。不能保证绝不被踢，也不能保证杀毒软件绝不误报。
 
-没有通用反作弊绕过、封包伪造 NoFall，也无需房主安装本 Mod。若纯客户端行为不能满足你的世界，可靠的服务端飞行与免伤需要房主配合，超出本项目范围。
+无需房主安装本 Mod，不提供通用反作弊绕过。若纯客户端行为不能满足你的世界，可靠的服务端飞行与免伤需要房主配合，超出本项目范围。
 
 ## 状态管理
 
@@ -58,7 +68,7 @@
 
 ## 云端构建与发布
 
-无需你在本地安装 Gradle、IDE 或 Minecraft 开发环境。在 GitHub 的 **Actions → Build SurvivalFlight → Run workflow** 执行后，下载成功运行的 `SurvivalFlight-26.2-1.0.0` Artifact。
+无需你在本地安装 Gradle、IDE 或 Minecraft 开发环境。在 GitHub 的 **Actions → Build SurvivalFlight → Run workflow** 执行后，下载成功运行的 `SurvivalFlight-<commit SHA>` Artifact。
 
 push、pull_request、workflow_dispatch 都会编译、运行回归检查、审查 JAR 结构并计算 SHA-256。固定版本如下：
 
@@ -73,7 +83,7 @@ push、pull_request、workflow_dispatch 都会编译、运行回归检查、审�
 
 26.2 已取消混淆，无需额外 mappings。压缩包使用固定时间戳与排序，便于复现。云端维护命令为 `./gradlew clean build --no-daemon` 和 `python3 tools/verify_jar.py`，产物位于 `build/libs/`。
 
-仅提交标准小型 Gradle Wrapper JAR，不提交游戏文件、构建产物、缓存或大型依赖。推送 `v1.0.0` 标签会先完成同样的检查，再发布 **Experimental 预发布版**，附安装 JAR、源码 JAR、指纹与归档清单。普通构建仅有仓库读取权限；发布任务单独使用写权限。第三方 Actions 固定到提交 SHA。
+仅提交标准小型 Gradle Wrapper JAR，不提交游戏文件、构建产物、缓存或大型依赖。推送与 `gradle.properties` 中 `mod_version` 一致的版本标签会先完成同样的检查，再发布 **Experimental 预发布版**，附安装 JAR、源码 JAR、指纹与归档清单。普通构建仅有仓库读取权限；发布任务单独使用写权限。第三方 Actions 固定到提交 SHA。
 
 实际验证结果见 [VALIDATION.md](VALIDATION.md)，源码与构建脚本安全审查见 [SECURITY.md](SECURITY.md)，发布限制见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。官方兼容性资料链接列在[英文 README](README.md#official-compatibility-evidence)。
 

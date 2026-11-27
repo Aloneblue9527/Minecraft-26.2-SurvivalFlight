@@ -1,78 +1,60 @@
-# Validation / 验证记录
+# SurvivalFlight 1.1.0 validation / 验证记录
 
-## Scope and toolchain
+The starting source was main revision `35454093444673a9cef4a5c4e30884af257b0d9b`. All development, builds and integration tests ran in Codex Cloud or GitHub Actions. No local user development environment or PAT was required. Historical 1.0.0 results remain available in the [1.0.0 tagged report](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/blob/v1.0.0/VALIDATION.md).
 
-The initial source revision was `10e3a76470aca0d24a26e2a96d40a242054b8f35`. Its existing Actions build failed. All repairs, downloads, builds and tests were performed in Codex Cloud or GitHub Actions, not on the user's computer.
+## Results
 
-Actual build configuration: Minecraft 26.2; Temurin Java 25 (cloud smoke test: 25.0.5.1); Gradle 9.5.1; Loom 1.17.21; Loader 0.20.1; Fabric API 0.161.0+26.2. No snapshot build dependencies.
-
-The official game JARs were downloaded using Mojang's manifest and checked against its SHA-1. The Gradle distribution and committed wrapper JAR were checked against Gradle's published SHA-256. API names were checked against actual official classes, not guessed from earlier versions.
-
-## Build and automated checks
-
-| Check | Result |
+| Check | Observed result |
 | --- | --- |
-| Actual `./gradlew clean build --no-daemon` with Java 25 | PASS |
-| GitHub Actions push and pull-request builds | PASS — [push](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/runs/45987602666), [PR](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/runs/45987680428) |
-| Cloud vs downloaded GitHub Actions installable JAR | PASS — byte-for-byte identical |
-| Dependency-free flight flag regression checks | PASS — 10 assertions |
-| Installable archive metadata, expected members, language keys, Mixin and Java 25 bytecode | PASS |
-| No nested dependencies, native payloads or test classes in installable JAR | PASS |
-| `git diff --check` and workflow YAML parsing | PASS |
-| Real server damage immunity / long-duration Anti-Kick | NOT VERIFIED; not promised |
-| User's virtual LAN / remote Fabric host | NOT VERIFIED |
-| Kaspersky or other antivirus vendor scan | NOT VERIFIED; no certification |
+| Java 25 / Gradle 9.5.1 / Loom 1.17.21 actual build | PASS |
+| Flight capability and landing-policy regression assertions | PASS — 23 |
+| Production JAR metadata, Java 25 bytecode, exact file list, selected API checks | PASS — 15 files, no nested libraries, native files or test classes |
+| Production client + disposable integrated server fixture | PASS — 24 integration assertions |
+| Real ground vs flight stone mining, identical tool and between-block cooldown | 11 vs 11 test ticks; server acknowledged both broken blocks |
+| F7 OFF, 29-block landing in Overworld | Server health 20 |
+| F7 OFF, 29-block landing in Nether | Server health 20 |
+| F7 OFF, 29-block landing in End | Server health 20 |
+| Later ordinary fall after grace ended | Normal damage; server health 18 in final run |
+| Void in Overworld, Nether and End with Mod flight armed | Normal damage and death in all three |
+| Packet construction on integrated server thread | Original false flag preserved; no other-player/global server rewrite |
+| New behavior on user's real remote / virtual LAN | NOT VERIFIED |
+| Kaspersky / other vendor scan | NOT VERIFIED; no certification |
 
-The 10 automated assertions cover default OFF, permission without automatic takeoff, restoring survival flags, repeated cleanup, preserving an existing flight grant, respecting new server grants/revocations, fresh player baselines, isolation of old/new player flags, and duplicate-enable rejection. These are **flight-flag ownership tests**, not a complete simulated Minecraft lifecycle suite.
-
-`tools/verify_jar.py` checks an exact list of 11 archive files, Java class major version 69, metadata and selected prohibited API references. Manual review separately covered all source and build scripts. See [SECURITY.md](SECURITY.md).
-
-Verified installable JAR SHA-256 (cloud and independent Actions build):
+Installable JAR SHA-256:
 
 ```text
-cbce79befc1db270c862f04b06375bb7dacccca4c8668aaa71032fbe96540c27
+092e46d52d7b66d0256dc9d2b75ed625300e81c71558efe94f6a3eabc2afc251
 ```
 
-## Actual production-JAR client smoke test
+The exact installable JAR was copied into the test client's mods folder and compared byte for byte with the cloud build. GitHub's tag workflow independently rebuilds, verifies the archive and checksum before publishing. Workflow records: [Build SurvivalFlight](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/workflows/build.yml).
 
-**PASS: the installable JAR was loaded from a temporary game's `mods/` folder**, alongside the matching Fabric API JAR. This used Fabric's production Knot client (`fabric.development=false`), the official client JAR and its normal libraries. It did not rely on loading project classes from the development output.
+## Test method and limits
 
-Cloud display: Xvfb, Mesa llvmpipe software OpenGL, 1280×720. Test profile: offline disposable `SmokeTest`; no user account credentials were used.
+The production Fabric Knot client used Minecraft 26.2, Loader 0.20.1, Fabric API 0.161.0+26.2, Temurin 25.0.5.1, Xvfb and software Mesa OpenGL. It loaded the actual installable mod JAR with `fabric.development=false`. A separately compiled, opt-in client test fixture (`src/smokeTest`) drove the disposable single-player world. Neither fixture classes nor commands/health initialization are present in the installable JAR.
 
-Observed evidence:
+The fixture invoked F7 via vanilla KeyMapping and native double-jump input, kept the actual local physical onGround false while hovering, checked the normal netherite-pickaxe stone speed (9.0), and measured actual server-acknowledged block breaks. Both compared blocks had the same vanilla between-block cooldown. Server raw mining speed sampled between actions may still be 1.8 while physically airborne; the fresh ground-status update at start/finish mining is what makes those specific server calculations consistent. The test checks accepted destruction, not just the client's visual cracks or a sampled speed value.
 
-- Fabric Loader log: `Loading Minecraft 26.2 with Fabric Loader 0.20.1` and `survivalflight 1.0.0`.
-- Actual title screen rendered as Minecraft 26.2 (Modded), then a disposable survival superflat world loaded.
-- Debug Mixin export confirmed the call to `SurvivalFlightClient.serverAbilitiesReceived()` at the end of the real `ClientPacketListener.handlePlayerAbilities` method. The exported vanilla class was used only for inspection and is not distributed.
-- F7 displayed `SurvivalFlight: ON`; double Space lifted the player, with survival health and hunger visible.
-- Hover stayed at the same displayed Y coordinate (`-57.84185`) across screenshots with no movement input. W changed horizontal position; Shift descended to the flat floor.
-- Airborne F7 disable displayed `Flight disabled — Falling danger!`.
-- Survival → creative produced Mod OFF; native double-Space flight still worked. Spectator and return to survival worked, with the first F7 after returning showing ON.
-- Death via the test world's `/kill`, respawn, and the first F7 afterward showed ON again, confirming the old enabled state did not survive death/player replacement.
+It then tested real 29-block falls after F7 OFF and checked actual server health in each dimension. After grace ended, a later ordinary fall damaged the player, confirming no lingering always-on immunity. Void tests rearmed Mod flight first, teleported below `getMinY()-64`, observed health loss and death in all three dimensions, then respawned. Test platforms were explicitly chunk-loaded; the End platform was away from the exit portal/central structures. Dimension/respawn resets required F7 again. No damage handlers or invulnerability flags were modified.
 
-The UI was exercised with external Java AWT Robot test input and screenshots. That test utility is **not part of the mod or repository**. No test code is bundled into the mod.
+The server's actual `Player.getDestroySpeed` airborne /5 check, movement ground/fall handling and `Entity.checkBelowWorld` (`Y < getMinY()-64`) were inspected in the official 26.2 bytecode. Mixins are limited to the current client player and main-thread outgoing packets. An explicit server-thread construction test confirms the packet hook does not alter shared integrated-server decoding.
 
-Environment warnings included unavailable audio/cursor services and unsuccessful normal Minecraft online-service calls from the disposable offline profile. The main menu and test world nevertheless rendered and ran. Initial attempts before the official asset download completed were incomplete; they were superseded by the final smoke run.
+The 23 lightweight checks cover previous capability restoration plus first-flight arming, pending landing after F7 OFF, clearing at landing/reset, ineligible contexts and per-world minimum-Y boundaries. They do not simulate every network/lifecycle combination.
 
-## Saved cloud evidence
+Normal Minecraft offline-profile service calls, missing cloud audio/cursor services and the optional Mixin debug decompiler produced environment warnings. The game world and assertions ran successfully. No Minecraft binaries, assets, exported classes, test worlds, caches or test-fixture binaries are committed.
 
-- [Production-client startup and smoke-test log](docs/validation/client-smoke.txt)
-- [Actual cloud Gradle build and archive-check log](docs/validation/cloud-build.txt)
-- [Survival flight ON screenshot](docs/validation/flight-on.png)
-- [Airborne disable warning screenshot](docs/validation/flight-warning.png)
+Unverified: latency/reordering/corrections on real remote servers, third-party anticheat, drops already accumulated before arming, abrupt disconnects at height, extended building sessions, every water/vehicle/gliding combination, language/remapping UI and antivirus vendors. These observed successes do **not** guarantee universal NoFall or Anti-Kick. The release remains Experimental / Pre-release.
 
-Only test logs/screenshots are stored here; no game classes, game assets, test worlds, caches or test utility binaries are committed.
+## Saved evidence
 
-## Remaining test boundaries
-
-This is a limited single-player integrated-server smoke test, **not real remote multiplayer success**. Not verified: virtual-LAN IP/port joining, dedicated-server corrections/kicks, long building sessions, protected high falls, abrupt remote disconnect/reconnect at height, complete dimension-transition coverage, every remapped key/language UI, other flight mods, or vendor antivirus results.
-
-Compilation, loader recognition, graphical client/world loading and the observed low-altitude controls are distinct from these unperformed tests. v1.0.0 must remain an **Experimental pre-release**.
-
-For release builds, GitHub Actions independently recompiles, runs the same 10 checks, inspects the JAR and attaches its actual SHA-256. The tag workflow publishes only on successful checks. The exact commit, workflow logs, release assets and fingerprint are available from the [workflow history](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/workflows/build.yml) and [v1.0.0 release](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/releases/tag/v1.0.0).
+- [Actual cloud build and JAR inspection](docs/validation/1.1.0/cloud-build.txt)
+- [Fixture compilation](docs/validation/1.1.0/fixture-build.txt)
+- [Full client/server integration log — ALL PASS: 24 checks](docs/validation/1.1.0/client-smoke.txt)
+- [Reproduce only in a disposable world](src/smokeTest/README.md)
 
 ## 简体中文
 
-已在云端实际编译成功，10 项飞行标志回归断言与最终 JAR 结构检查通过。已使用成品 JAR（非开发输出目录）在 Fabric 正式加载路径启动至主菜单及临时单人生存超平坦世界；验证 F7 提示、双空格起飞、悬停、水平移动、Shift 下降、空中关闭警告、创造/旁观者/生存切换、死亡重生后重新开启。Mixin 注入也已检查到实际目标方法。
+1.1.0 已实际编译，23 项能力/落地保护回归检查和 24 项实际客户端/服务端集成检查通过；成品 JAR 的 15 个文件和 Java 25 字节码已检查，无测试类、嵌套依赖或原生文件。
 
-这些结果不等于真实多人联机通过。你的虚拟局域网、远程服务器、长时间建筑、高空断线与可靠免伤仍未验证，不宣称完全稳定。版本必须保留 Experimental / Pre-release 标记，并按 README 先做低空验收。没有要求本地开发环境、PAT、关闭杀毒软件或添加排除项。
+同工具、相同连续挖掘冷却条件下，地面与飞行挖石头都用了 11 个测试 tick，且检查了服务端方块确实被破坏。主世界、下界、末地开启飞行后关闭 F7，从 29 格高度落地均保持服务端生命值 20；保护结束后的普通坠落正常扣血。三个维度重新开启飞行后进入虚空，均正常扣血死亡。
+
+这些是可丢弃的云端单人世界实测，不能代替你的真实远程联机验证。测试夹具中的生命值初始化/世界命令仅用于构造测试条件，不在安装 JAR 内。新版本仍标为预发布，服务端纠正、延迟、断线和启用前已累积的摔落距离仍有风险；不要关闭杀毒软件或添加排除项。

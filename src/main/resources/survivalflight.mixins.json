@@ -3,7 +3,10 @@
   "package": "dev.survivalflight.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "ClientPacketListenerMixin"
+    "ClientPacketListenerMixin",
+    "PlayerMiningMixin",
+    "MovePlayerPacketMixin",
+    "MiningPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1

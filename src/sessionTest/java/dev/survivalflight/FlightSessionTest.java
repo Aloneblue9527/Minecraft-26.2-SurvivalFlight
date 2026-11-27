@@ -59,6 +59,22 @@ public final class FlightSessionTest {
             require(!survival.allowed, "Duplicate enable cannot change another player");
         }
         session.disable();
+        FlightSafety safety = new FlightSafety();
+        require(!safety.protects(false, false, true, 64, -64), "No protection by default");
+        require(!safety.protects(true, false, true, 64, -64), "Enabling alone does not arm a normal jump");
+        require(safety.protects(true, true, true, 64, -64), "First actual flight packet is protected");
+        safety.observe(true, true, false);
+        require(safety.protects(false, false, true, 64, -64), "One pending landing after F7 OFF");
+        for (int minY : new int[] {-64, 0, 0}) {
+            require(!safety.protects(true, true, true, minY - 1, minY), "No below-minimum ground report in any vanilla dimension");
+            require(safety.protects(true, true, true, minY, minY), "Build minimum remains eligible");
+        }
+        require(!safety.protects(true, true, false, 64, -64), "Invalid context/fluid/vehicle must not be protected");
+        safety.observe(false, false, true);
+        require(!safety.protects(false, false, true, 64, -64), "Landing ends grace; no later jump immunity");
+        safety.observe(true, true, false);
+        safety.reset();
+        require(!safety.protects(false, false, true, 64, -64), "Reset clears pending landing");
         System.out.println("FlightSession: " + checks + " regression checks passed");
     }
 }
