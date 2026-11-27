@@ -17,3 +17,9 @@ Do not distribute this fixture as an installable release mod. No game binaries o
 Use `-Dsurvivalflight.hurtSmokeTest=true` instead of the normal suite flag. The fixture spawns a real NoAI Blaze owner and its vanilla SmallFireball, measures actual projectile/fire damage and hover displacement, and logs raw versus applied motion packets. It also tests synthetic motion-handler controls for exact X/Z preservation, existing ascent, upward knockback, Shift descent, no hurt window, other entities and F7 OFF. These controls are test setup, not production damage or movement cheats.
 
 For the published 1.0.0 baseline only, also set `-Dsurvivalflight.expectHurtDrop=true`: success is `BASELINE REPRODUCED`, and the player may land/end flying after dropping. For the fixed version, omit that flag: success is `[SF-HURT] ALL PASS`. Use separate disposable game directories and keep the old/new installable JARs separate. Enable only one suite flag per run. All fixture code/mixins are excluded from the normal JAR.
+
+## Sprint-descent correction reproduction
+
+Use `-Dsurvivalflight.sprintSmokeTest=true` alone for the input/correction suite. It uses native forward/sprint/Shift/jump key mappings, counts real incoming position corrections without modifying them, and tests sprint-forward, sprint+Shift-forward, regular Shift-forward, release/press transitions, ascent and a Shift-forward protected landing after F7 OFF. Release-Shift hover measurements allow vanilla inertia to settle, while corrections are counted throughout the transition.
+
+For the published 1.1.1 baseline only, also set `-Dsurvivalflight.expectSprintRebound=true`; success is `BASELINE REPRODUCED` with more than one actual correction. For the fixed build, omit that flag and require `[SF-SPRINT] ALL PASS`. The fixture's position-packet trace is read-only and is excluded from the installable JAR.

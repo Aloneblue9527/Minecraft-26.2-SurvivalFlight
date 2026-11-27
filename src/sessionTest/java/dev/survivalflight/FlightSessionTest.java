@@ -82,6 +82,12 @@ public final class FlightSessionTest {
         require(FlightSafety.hurtVertical(0, 0, true) == 0, "Keep zero vertical sync");
         require(FlightSafety.hurtVertical(0, -2.5, false) == -2.5, "Outside the hurt-flight scope retain server motion");
         require(FlightSafety.hurtVertical(0.15, -0.4, false) == -0.4, "Manual descent is not stabilized");
+        require(FlightSafety.needsGroundClear(true, true, true, true), "Protected airborne Shift positions need an airborne preface");
+        require(!FlightSafety.needsGroundClear(false, true, true, true), "No extra packet outside protection");
+        require(!FlightSafety.needsGroundClear(true, false, true, true), "Status/rotation packets cannot recurse");
+        require(!FlightSafety.needsGroundClear(true, true, false, true), "Physical grounded sneaking stays vanilla");
+        require(!FlightSafety.needsGroundClear(true, true, true, false), "No extra packet without Shift");
+        require(!FlightSafety.needsGroundClear(false, false, false, false), "All-disabled scope stays inactive");
         System.out.println("FlightSession: " + checks + " regression checks passed");
     }
 }
