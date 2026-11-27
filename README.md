@@ -3,14 +3,14 @@
 [简体中文](README.zh-CN.md) · [Releases](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/releases) · [Cloud builds](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/workflows/build.yml)
 
 **Experimental client-only building flight for Minecraft 26.2 / Fabric / Java 25.**
-Use only in private worlds with the host's permission. v1.1.0 is a **pre-release**: the new mining/landing behavior in real remote multiplayer has not been verified. This does not grant server-side flight permission. Fall protection is experimental and cannot guarantee immunity.
+Use only in private worlds with the host's permission. v1.1.1 is a **pre-release**: the new mining/landing/hurt-motion behavior in real remote multiplayer has not been verified. This does not grant server-side flight permission. Fall protection is experimental and cannot guarantee immunity.
 
 ## Install and use
 
 1. Select **Minecraft Java Edition 26.2** in your launcher and install **Fabric Loader 0.20.1 or newer**.
 2. Install **Fabric API 0.161.0+26.2** for Minecraft 26.2.
-3. Download `survivalflight-26.2-1.1.0.jar` from the release into **your client's** `mods` directory. Do not install the `-sources.jar`.
-4. Check the download against the release's `SHA256SUMS`. PowerShell: `Get-FileHash .\survivalflight-26.2-1.1.0.jar -Algorithm SHA256`.
+3. Download `survivalflight-26.2-1.1.1.jar` from the release into **your client's** `mods` directory. Do not install the `-sources.jar`.
+4. Check the download against the release's `SHA256SUMS`. PowerShell: `Get-FileHash .\survivalflight-26.2-1.1.1.jar -Algorithm SHA256`.
 5. Join the permitted private world. The host does **not** need this mod.
 
 Flight starts **OFF**. Press **F7** to enable flight permission, then **double-tap Space** to enter vanilla creative flight. WASD moves horizontally, Space ascends, Shift descends. Double-tap Space again to stop flying, or F7 to turn the feature off. Remap F7 under vanilla **Options → Controls → Key Binds → Miscellaneous**.
@@ -25,13 +25,21 @@ Only the vanilla Action Bar is used, with English and Simplified Chinese transla
 
 The falling warning is conservative: it appears when disabling while airborne, even near the ground. It also appears when the mod observes unexpected flight loss while airborne. It is a warning, **not protection**; disconnecting prevents further messages.
 
+## Hurt-related hovering (1.1.1)
+
+A survival server does not share the client's injected flight permission. After a hit, its motion update can contain a falling vertical speed even though the client was hovering. Version 1.1.1 stabilizes **only negative vertical motion received during vanilla's hurt animation**, while this mod is actively flying in survival and Shift is not held. The existing local ascent is preserved.
+
+Damage, fire, horizontal knockback, upward knockback and intentional Shift descent remain vanilla. Ordinary motion outside the hurt window, other entities and server position/teleport corrections are untouched. The hook is inactive in fluids, vehicles, gliding, native creative/spectator modes, after F7 OFF and below the world's minimum Y. This is not a permanent altitude lock or general knockback immunity.
+
+You can upgrade directly from 1.0.0 to 1.1.1; it includes the 1.1.0 mining and experimental landing features below. Replace the old JAR rather than installing two versions.
+
 ## Server limitations: Anti-Kick and NoFall
 
 ### Flight mining and experimental landing protection (1.1.0)
 
 While actually flying with this mod in survival, the airborne mining penalty (vanilla speed ÷5) is skipped. Mining uses the same tool speed as on the ground; tool choice, enchantments, fatigue and underwater rules remain vanilla.
 
-During an eligible Mod flight, ordinary movement packets report `onGround=true` so the unmodified server can evaluate mining/landing without the usual airborne penalty. A single ground-status update also precedes each start/finish mining action during actual Mod flight so the server evaluates that action consistently. Movement packet cadence otherwise stays vanilla. The real client's physical `onGround`, movement vectors, flight speed, health and damage handlers are untouched. No downward pulses or client fall-distance clearing are used.
+During an eligible Mod flight, ordinary movement packets report `onGround=true` so the unmodified server can evaluate mining/landing without the usual airborne penalty. A single ground-status update also precedes each start/finish mining action during actual Mod flight so the server evaluates that action consistently. Movement packet cadence otherwise stays vanilla. The ground-report/mining assist leaves the real client's physical `onGround`, positions, flight speed, health and damage handlers untouched. The hurt-motion adjustment above is separately scoped. No downward pulses or client fall-distance clearing are used.
 
 Protection arms only after actual flight, and stays armed for the next landing if F7 is turned off in the air. It ends at landing, water/lava, riding/gliding, death, disconnect, world/dimension or game-mode changes, or an incoming abilities sync. Simply enabling F7 before an ordinary jump does not arm it. The falling warning remains because the server can reject/correct the report.
 

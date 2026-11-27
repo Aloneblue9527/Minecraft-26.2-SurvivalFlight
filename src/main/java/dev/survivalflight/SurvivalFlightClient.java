@@ -8,9 +8,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
 /** Client-only permission toggle. Vanilla LocalPlayer implements all flight movement. */
@@ -73,9 +75,22 @@ public final class SurvivalFlightClient implements ClientModInitializer {
 
     public static boolean miningAssistActive(Player player) {
         if (instance == null || player != instance.owner) return false;
-        LocalPlayer local = instance.owner;
-        return instance.session.enabled() && instance.eligible(local)
-                && local.getAbilities().flying && local.getY() >= local.level().getMinY();
+        return instance.activeFlight(instance.owner);
+    }
+
+    private boolean activeFlight(LocalPlayer player) {
+        return session.enabled() && eligible(player)
+                && player.getAbilities().flying && player.getY() >= player.level().getMinY();
+    }
+
+    public static Vec3 stabilizeHurtMotion(Entity entity, Vec3 incoming) {
+        if (instance == null || entity != instance.owner || !(entity instanceof LocalPlayer player)
+                || !Minecraft.getInstance().isSameThread() || !(incoming.y < 0)
+                || !instance.activeFlight(player) || player.hurtTime <= 0
+                || Minecraft.getInstance().options.keyShift.isDown()) return incoming;
+        // Keep horizontal and upward impulses, health, fire and position corrections vanilla.
+        return new Vec3(incoming.x,
+                FlightSafety.hurtVertical(player.getDeltaMovement().y, incoming.y, true), incoming.z);
     }
 
     public static boolean reportGrounded() {

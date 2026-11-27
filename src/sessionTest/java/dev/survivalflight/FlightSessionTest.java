@@ -75,6 +75,13 @@ public final class FlightSessionTest {
         safety.observe(true, true, false);
         safety.reset();
         require(!safety.protects(false, false, true, 64, -64), "Reset clears pending landing");
+        require(FlightSafety.hurtVertical(0, -2.5, true) == 0, "Hurt sync must not replace hovering with server gravity");
+        require(FlightSafety.hurtVertical(0.15, -2.5, true) == 0.15, "Keep existing intentional ascent");
+        require(FlightSafety.hurtVertical(-0.1, -2.5, true) == 0, "No existing residual descent while stabilizing");
+        require(FlightSafety.hurtVertical(0, 0.4, true) == 0.4, "Keep upward knockback");
+        require(FlightSafety.hurtVertical(0, 0, true) == 0, "Keep zero vertical sync");
+        require(FlightSafety.hurtVertical(0, -2.5, false) == -2.5, "Outside the hurt-flight scope retain server motion");
+        require(FlightSafety.hurtVertical(0.15, -0.4, false) == -0.4, "Manual descent is not stabilized");
         System.out.println("FlightSession: " + checks + " regression checks passed");
     }
 }
