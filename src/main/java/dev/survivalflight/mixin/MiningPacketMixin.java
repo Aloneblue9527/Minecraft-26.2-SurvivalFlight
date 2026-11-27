@@ -14,7 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientCommonPacketListenerImpl.class)
 abstract class MiningPacketMixin {
     @Inject(method = "send", at = @At("HEAD"))
-    private void survivalflight$miningGroundReport(Packet<?> packet, CallbackInfo ci) {
+    private void survivalflight$flightGroundReports(Packet<?> packet, CallbackInfo ci) {
+        if (packet instanceof ServerboundMovePlayerPacket move) {
+            SurvivalFlightClient.prepareMovement(move);
+            return;
+        }
         if (!(packet instanceof ServerboundPlayerActionPacket action)
                 || !SurvivalFlightClient.reportGrounded()) return;
         var player = Minecraft.getInstance().player;

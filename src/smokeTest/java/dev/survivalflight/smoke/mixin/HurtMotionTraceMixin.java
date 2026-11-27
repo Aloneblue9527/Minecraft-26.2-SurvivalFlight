@@ -1,6 +1,8 @@
 package dev.survivalflight.smoke.mixin;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import dev.survivalflight.smoke.SprintDescentSmokeTest;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,5 +19,9 @@ abstract class HurtMotionTraceMixin {
         if(Boolean.getBoolean("survivalflight.hurtSmokeTest")&&player!=null&&packet.id()==player.getId()) {
             System.out.println("[SF-HURT] WIRE raw="+packet.movement()+", applied="+player.getDeltaMovement()+", hurtTime="+player.hurtTime+", flying="+player.getAbilities().flying);
         }
+    }
+    @Inject(method="handleMovePlayer",at=@At("RETURN"))
+    private void survivalflight$correction(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
+        if(Boolean.getBoolean("survivalflight.sprintSmokeTest")) SprintDescentSmokeTest.correction(packet.id(),packet.change().position());
     }
 }

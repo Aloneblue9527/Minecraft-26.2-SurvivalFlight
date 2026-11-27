@@ -40,7 +40,7 @@ with zipfile.ZipFile(jar) as archive:
             assert data[:4] == bytes.fromhex("cafebabe")
             assert struct.unpack(">H", data[6:8])[0] == 69, "Expected Java 25 bytecode"
             if b"ServerboundMovePlayerPacket" in data:
-                assert name in {"dev/survivalflight/mixin/MovePlayerPacketMixin.class", "dev/survivalflight/mixin/MiningPacketMixin.class"}
+                assert name in {"dev/survivalflight/mixin/MovePlayerPacketMixin.class", "dev/survivalflight/mixin/MiningPacketMixin.class", "dev/survivalflight/SurvivalFlightClient.class"}
             for forbidden in (
                 b"java/lang/Runtime", b"java/lang/ProcessBuilder", b"java/net/",
                 b"java/nio/file/", b"java/io/", b"sun/misc/Unsafe", b"loadLibrary",

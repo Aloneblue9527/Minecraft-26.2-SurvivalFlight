@@ -20,4 +20,9 @@ final class FlightSafety {
     static double hurtVertical(double currentY, double incomingY, boolean stabilize) {
         return stabilize && incomingY < 0 ? Math.max(0, currentY) : incomingY;
     }
+
+    static boolean needsGroundClear(boolean protectedReport, boolean hasPosition,
+                                    boolean physicallyAirborne, boolean shift) {
+        return protectedReport && hasPosition && physicallyAirborne && shift;
+    }
 }

@@ -8,6 +8,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,7 @@ public final class SurvivalFlightClient implements ClientModInitializer {
     private Object level;
     private GameType mode;
     private boolean wasFlying;
+    private boolean preparingAirborneMove;
 
     @Override
     public void onInitializeClient() {
@@ -96,11 +98,26 @@ public final class SurvivalFlightClient implements ClientModInitializer {
     public static boolean reportGrounded() {
         // Shared packet classes may also be decoded by an integrated server/Netty thread.
         // Never change those packets (including packets belonging to another player).
-        if (instance == null || !Minecraft.getInstance().isSameThread()
+        if (instance == null || instance.preparingAirborneMove || !Minecraft.getInstance().isSameThread()
                 || !instance.eligible(instance.owner)) return false;
         LocalPlayer player = instance.owner;
         return instance.safety.protects(instance.session.enabled(), player.getAbilities().flying,
                 true, player.getY(), player.level().getMinY());
+    }
+
+    public static void prepareMovement(ServerboundMovePlayerPacket packet) {
+        if (!reportGrounded()) return;
+        LocalPlayer player = instance.owner;
+        if (!FlightSafety.needsGroundClear(true, packet.hasPosition(), !player.onGround(),
+                Minecraft.getInstance().options.keyShift.isDown())) return;
+        // A preceding synthetic ground report must not trigger vanilla sneak-edge braking.
+        // Keep this status genuinely airborne; the original position packet retains NoFall.
+        instance.preparingAirborneMove = true;
+        try {
+            player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(false, player.horizontalCollision));
+        } finally {
+            instance.preparingAirborneMove = false;
+        }
     }
 
     private static void message(LocalPlayer player, String key) {
