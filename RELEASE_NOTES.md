@@ -1,40 +1,33 @@
-# SurvivalFlight v1.1.0 — Experimental / 实验性预发布
+# SurvivalFlight v1.1.1 — Experimental / 实验性预发布
 
 Minecraft **26.2** · Java **25** · Fabric Loader **0.20.1+** · Fabric API **0.161.0+26.2**.
 
-Install **survivalflight-26.2-1.1.0.jar** on your client, replacing the old SurvivalFlight JAR. Do not install both versions or the sources/test-fixture JAR. The host does not need the mod. Check the attached **SHA256SUMS**.
+Install **survivalflight-26.2-1.1.1.jar**, replacing your older SurvivalFlight JAR. You can upgrade directly from 1.0.0; there is no need to install 1.1.0 first. Do not install multiple versions, the sources JAR or the disposable test fixture. The host does not need this mod.
 
-## Changes
+## Hurt-related hovering fix
 
-- Flying mining uses the same survival tool speed as on the ground: removes only vanilla's airborne ÷5 penalty. Tool, enchantment, mining fatigue and underwater rules remain vanilla.
-- Experimental NoFall during actual Mod flight and one pending landing after F7 OFF. Ground reporting is cleared after landing, water/lava, riding/gliding, death, disconnect, context/mode changes or authoritative abilities sync.
-- Existing outgoing movement packets get a scoped ground flag. A ground-status update precedes start/finish mining actions during actual Mod flight. Positions, velocities, collision, real client onGround and vanilla flight speed are untouched.
-- **Void damage/death stays vanilla in the Overworld, Nether and End.** Ground correction stops below the current world's minimum build Y. No health, invulnerability or damage-handler changes are made.
-- Packet changes are client-thread-only: integrated-server decoding and other players' packets are untouched.
-- Pinned version is centralized in gradle.properties; checked push/PR/manual builds and pre-release tag publication continue. Actions use pinned Node 24 versions.
-- An opt-in disposable single-player integration fixture is publicly available in src/smokeTest and excluded from the installable mod.
+Reproduced against the public 1.0.0 JAR using a real Blaze-owned SmallFireball: the survival server's motion sync carried its falling Y velocity into an otherwise hovering client, with repeated syncs during fire damage. This could drop the player far enough to land and end vanilla flight.
 
-## Limits
+During active Mod flight and vanilla's hurt animation, a negative incoming Y is stabilized if Shift is not held. X/Z, existing ascent and upward motion are retained. Damage, fire and death remain vanilla. Ordinary motion outside the hurt window, other entities, manual Shift descent, F7 OFF, native creative/spectator modes and below-world motion are not filtered. Server teleports/position corrections remain authoritative; this is not a permanent height lock or general knockback immunity.
 
-This remains an **Experimental pre-release**. Client-reported grounding cannot guarantee protection on every server, against accumulated fall damage before arming, server corrections, lag or disconnects. It does not bypass third-party anticheat and does not grant server flight permission. Normal damage sources, including the void, still apply. The falling warning remains.
+Includes the 1.1.0 ground-rate flight mining and experimental one-landing NoFall behavior. Void damage/death remains vanilla in the Overworld, Nether and End. Existing server/latency/disconnect limitations still apply. No speed change, noclip, health/invulnerability modification, native payload, extra external network connection or cheat-client dependency was added.
 
-The new feature's behavior on the user's real remote/virtual LAN must still be checked at low altitude. Kaspersky behavior is unverified; no antivirus exclusion or disabling is required.
+## Verification and limits
 
-Actual build, client/server integration results, logs and remaining test boundaries: [VALIDATION.md](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/blob/main/VALIDATION.md).
+Actual Java 25 build and exact production JAR checks passed. See [VALIDATION.md](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/blob/main/VALIDATION.md) for old/new projectile traces, real damage, scope controls, mining/landing/void regressions and remaining boundaries. The opt-in fixture and its motion/damage setup are not shipped in the mod.
+
+The new version has not been tested in the user's real remote/virtual LAN. It remains an Experimental pre-release. Start at low altitude; client-side protection cannot guarantee every server correction, lag, prior fall accumulation or disconnect case. Kaspersky behavior is unverified; no antivirus exclusion or disabling is required. Check the attached SHA256SUMS.
 
 ## 简体中文
 
-请用 **survivalflight-26.2-1.1.0.jar** 替换旧版，删除旧 JAR；不要安装源码 JAR 或独立测试夹具。房主无需安装。
+请用 **survivalflight-26.2-1.1.1.jar** 替换旧 JAR，可从 1.0.0 直接升级，依赖不变，无需先安装 1.1.0。不要同时安装两个版本，也不要安装源码 JAR 或测试夹具。
 
-- 飞行挖掘恢复为同工具的地面生存速度，保留工具、附魔、水下与挖掘疲劳规则。
-- 加入实验性防摔：真正进入飞行后启用，空中按 F7 关闭后继续尝试保护至本次落地；落地、液体、骑乘/滑翔、死亡、断线、模式/世界/维度或能力同步变化会清除。
-- **主世界、下界、末地掉入虚空仍会正常扣血死亡。** 读取当前维度的建筑下限，不改生命值、无敌或虚空伤害。
-- 此版有范围受限的着地报告修正，不能保证所有服务端免伤，也不保证不会被踢。原版飞行速度与移动物理保持不变。
+已复现并修正烈焰人/燃烧受击同步导致的飞行下沉：只在本 Mod 实际飞行、受伤窗口内且没有主动下降时处理负垂直速度。正常扣血、燃烧、水平/向上击退、Shift 下降和服务端传送纠正保留；不做永久锁高或通用击退免疫。
 
-安装前核对附件 SHA-256，先按中文 README 在安全低空测试。真实远程联机的本次修正尚待验证，因此保留 Experimental / Pre-release 标记。
+此版包含 1.1.0 的挖掘与实验性防摔功能；主世界、下界、末地的虚空伤害和死亡仍保持原版。云端实测与真实联机验证分别记录，新版本仍为 Experimental / Pre-release，请先安全低空复测。
 
 ## Observed cloud results / 云端实测
 
-23 regression assertions and 24 production-client/integrated-server assertions passed. Ground/flying stone mining: 11/11 test ticks. A 29-block landing after F7 OFF left server health at 20 in all three dimensions; subsequent ordinary falls damaged normally. Void damage/death remained normal in all three dimensions. Real remote multiplayer remains unverified.
+30 unit/state assertions, 16 hurt/projectile/scope checks and 24 mining/landing/void regression checks passed. The old 1.0.0 JAR reproduced the Blaze-induced descent; the 1.1.1 projectile/fire observation recorded 0.0-block altitude loss while damage, fire and horizontal knockback remained. The three-dimensional landing and void tests still passed.
 
-23 项状态检查及 24 项集成检查通过；三维防摔落地与虚空伤害均已在临时世界分别实测。详细日志见验证报告。
+旧版受击下沉已复现，修正版实测不掉高且仍正常扣血、燃烧和水平击退；三维落地与虚空回归均通过。实际远程联机仍待验证。

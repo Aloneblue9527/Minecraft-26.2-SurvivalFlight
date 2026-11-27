@@ -15,4 +15,9 @@ final class FlightSafety {
     }
 
     void reset() { landing = false; }
+
+    /** Damage can synchronize the server's falling velocity over local flight. */
+    static double hurtVertical(double currentY, double incomingY, boolean stabilize) {
+        return stabilize && incomingY < 0 ? Math.max(0, currentY) : incomingY;
+    }
 }
