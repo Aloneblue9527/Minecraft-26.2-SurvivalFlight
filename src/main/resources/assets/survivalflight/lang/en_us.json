@@ -1,1 +1,6 @@
-{"key.survivalflight.toggle":"Toggle Survival Flight"}
+{
+  "key.survivalflight.toggle": "Toggle Survival Flight",
+  "message.survivalflight.on": "SurvivalFlight: ON",
+  "message.survivalflight.off": "SurvivalFlight: OFF",
+  "message.survivalflight.danger": "Flight disabled — Falling danger!"
+}

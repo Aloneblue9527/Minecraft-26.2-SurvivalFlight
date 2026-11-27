@@ -1,1 +1,6 @@
-{"key.survivalflight.toggle":"切换生存飞行"}
+{
+  "key.survivalflight.toggle": "切换生存飞行",
+  "message.survivalflight.on": "生存飞行：开启",
+  "message.survivalflight.off": "生存飞行：关闭",
+  "message.survivalflight.danger": "飞行已关闭 — 注意坠落危险！"
+}
