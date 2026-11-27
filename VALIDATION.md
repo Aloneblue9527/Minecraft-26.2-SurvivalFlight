@@ -54,6 +54,15 @@ The UI was exercised with external Java AWT Robot test input and screenshots. Th
 
 Environment warnings included unavailable audio/cursor services and unsuccessful normal Minecraft online-service calls from the disposable offline profile. The main menu and test world nevertheless rendered and ran. Initial attempts before the official asset download completed were incomplete; they were superseded by the final smoke run.
 
+## Saved cloud evidence
+
+- [Production-client startup and smoke-test log](docs/validation/client-smoke.txt)
+- [Actual cloud Gradle build and archive-check log](docs/validation/cloud-build.txt)
+- [Survival flight ON screenshot](docs/validation/flight-on.png)
+- [Airborne disable warning screenshot](docs/validation/flight-warning.png)
+
+Only test logs/screenshots are stored here; no game classes, game assets, test worlds, caches or test utility binaries are committed.
+
 ## Remaining test boundaries
 
 This is a limited single-player integrated-server smoke test, **not real remote multiplayer success**. Not verified: virtual-LAN IP/port joining, dedicated-server corrections/kicks, long building sessions, protected high falls, abrupt remote disconnect/reconnect at height, complete dimension-transition coverage, every remapped key/language UI, other flight mods, or vendor antivirus results.
