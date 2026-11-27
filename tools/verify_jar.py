@@ -7,7 +7,8 @@ import sys
 import zipfile
 from pathlib import Path
 
-jar = Path(sys.argv[1] if len(sys.argv) > 1 else "build/libs/survivalflight-26.2-1.0.0.jar")
+version = next(line.split("=", 1)[1].strip() for line in Path("gradle.properties").read_text().splitlines() if line.startswith("mod_version="))
+jar = Path(sys.argv[1] if len(sys.argv) > 1 else f"build/libs/survivalflight-26.2-{version}.jar")
 with zipfile.ZipFile(jar) as archive:
     names = archive.namelist()
     assert len(names) == len(set(names)), "Duplicate ZIP entries"
@@ -18,26 +19,32 @@ with zipfile.ZipFile(jar) as archive:
         "dev/survivalflight/FlightSession.class", "dev/survivalflight/FlightSession$FlightFlags.class",
         "dev/survivalflight/SurvivalFlightClient.class", "dev/survivalflight/SurvivalFlightClient$1.class",
         "dev/survivalflight/mixin/ClientPacketListenerMixin.class",
+        "dev/survivalflight/FlightSafety.class",
+        "dev/survivalflight/mixin/PlayerMiningMixin.class",
+        "dev/survivalflight/mixin/MovePlayerPacketMixin.class",
+        "dev/survivalflight/mixin/MiningPacketMixin.class",
     }
     assert files == expected, f"Unexpected or missing files: {files ^ expected}"
     metadata = json.loads(archive.read("fabric.mod.json"))
     assert metadata["id"] == "survivalflight"
-    assert metadata["version"] == "1.0.0" and metadata["environment"] == "client"
+    assert metadata["version"] == version and metadata["environment"] == "client"
     assert metadata["depends"]["minecraft"] == "26.2"
     assert metadata["license"] == "MIT"
     assert metadata["mixins"] == ["survivalflight.mixins.json"]
     mixins = json.loads(archive.read("survivalflight.mixins.json"))
     assert mixins["required"] and mixins["injectors"]["defaultRequire"] == 1
-    assert mixins["client"] == ["ClientPacketListenerMixin"]
+    assert mixins["client"] == ["ClientPacketListenerMixin", "PlayerMiningMixin", "MovePlayerPacketMixin", "MiningPacketMixin"]
     for name in files:
         data = archive.read(name)
         if name.endswith(".class"):
             assert data[:4] == bytes.fromhex("cafebabe")
             assert struct.unpack(">H", data[6:8])[0] == 69, "Expected Java 25 bytecode"
+            if b"ServerboundMovePlayerPacket" in data:
+                assert name in {"dev/survivalflight/mixin/MovePlayerPacketMixin.class", "dev/survivalflight/mixin/MiningPacketMixin.class"}
             for forbidden in (
                 b"java/lang/Runtime", b"java/lang/ProcessBuilder", b"java/net/",
                 b"java/nio/file/", b"java/io/", b"sun/misc/Unsafe", b"loadLibrary",
-                b"ServerboundMovePlayerPacket", b"fallDistance", b"setFlyingSpeed",
+                b"fallDistance", b"setFlyingSpeed",
                 b"setDeltaMovement", b"noPhysics",
             ):
                 assert forbidden not in data, f"Review unexpected API {forbidden!r} in {name}"

@@ -3,14 +3,14 @@
 [简体中文](README.zh-CN.md) · [Releases](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/releases) · [Cloud builds](https://github.com/Aloneblue9527/Minecraft-26.2-SurvivalFlight/actions/workflows/build.yml)
 
 **Experimental client-only building flight for Minecraft 26.2 / Fabric / Java 25.**
-Use only in private worlds with the host's permission. v1.0.0 is a **pre-release**: real remote multiplayer has not been verified. This does not grant server-side flight permission or reliable fall immunity.
+Use only in private worlds with the host's permission. v1.1.0 is a **pre-release**: the new mining/landing behavior in real remote multiplayer has not been verified. This does not grant server-side flight permission. Fall protection is experimental and cannot guarantee immunity.
 
 ## Install and use
 
 1. Select **Minecraft Java Edition 26.2** in your launcher and install **Fabric Loader 0.20.1 or newer**.
 2. Install **Fabric API 0.161.0+26.2** for Minecraft 26.2.
-3. Download `survivalflight-26.2-1.0.0.jar` from the release into **your client's** `mods` directory. Do not install the `-sources.jar`.
-4. Check the download against the release's `SHA256SUMS`. PowerShell: `Get-FileHash .\survivalflight-26.2-1.0.0.jar -Algorithm SHA256`.
+3. Download `survivalflight-26.2-1.1.0.jar` from the release into **your client's** `mods` directory. Do not install the `-sources.jar`.
+4. Check the download against the release's `SHA256SUMS`. PowerShell: `Get-FileHash .\survivalflight-26.2-1.1.0.jar -Algorithm SHA256`.
 5. Join the permitted private world. The host does **not** need this mod.
 
 Flight starts **OFF**. Press **F7** to enable flight permission, then **double-tap Space** to enter vanilla creative flight. WASD moves horizontally, Space ascends, Shift descends. Double-tap Space again to stop flying, or F7 to turn the feature off. Remap F7 under vanilla **Options → Controls → Key Binds → Miscellaneous**.
@@ -27,7 +27,17 @@ The falling warning is conservative: it appears when disabling while airborne, e
 
 ## Server limitations: Anti-Kick and NoFall
 
-The original periodic downward movement and forged `onGround=true` packets have been removed. They interfered with hovering and did not establish reliable protection. The mod does not send custom movement packets or clear client fall distance.
+### Flight mining and experimental landing protection (1.1.0)
+
+While actually flying with this mod in survival, the airborne mining penalty (vanilla speed ÷5) is skipped. Mining uses the same tool speed as on the ground; tool choice, enchantments, fatigue and underwater rules remain vanilla.
+
+During an eligible Mod flight, ordinary movement packets report `onGround=true` so the unmodified server can evaluate mining/landing without the usual airborne penalty. A single ground-status update also precedes each start/finish mining action during actual Mod flight so the server evaluates that action consistently. Movement packet cadence otherwise stays vanilla. The real client's physical `onGround`, movement vectors, flight speed, health and damage handlers are untouched. No downward pulses or client fall-distance clearing are used.
+
+Protection arms only after actual flight, and stays armed for the next landing if F7 is turned off in the air. It ends at landing, water/lava, riding/gliding, death, disconnect, world/dimension or game-mode changes, or an incoming abilities sync. Simply enabling F7 before an ordinary jump does not arm it. The falling warning remains because the server can reject/correct the report.
+
+**Void damage stays vanilla in the Overworld, Nether and End.** Below the current world's `getMinY()` the ground-report correction stops. No dimension-specific invulnerability or damage cancellation exists. Vanilla's below-world damage check is independent of landing/fall distance.
+
+This is a deliberate, narrowly scoped experimental ground-report change requested for flight mining/NoFall. It is not a generic anticheat bypass. Lag, prior accumulated fall damage before flight is armed, server corrections and different server behavior can still cause injury or death. Test only in a backed-up disposable world first.
 
 The actual 26.2 server bytecode was inspected:
 
@@ -37,13 +47,13 @@ The actual 26.2 server bytecode was inspected:
 - Fall damage is evaluated on the server from movement and server state. `allow-flight=true` disables the floating kick check; it does **not** grant survival fall immunity. Descent, landing, F7, death, dimension changes, ability synchronization, connection loss and reconnecting can still lead to damage or death. Do not rely on the mod while offline or reconnecting at height.
 - Movement correction, latency, other mods, and server configuration may still interrupt flight. No absolute anti-kick or antivirus promise is made.
 
-There is no generic anticheat bypass, NoFall packet spoofing, or server installation requirement. If this client-only behavior is insufficient for your world, safe authoritative flight/fall protection requires host/server cooperation outside this mod's scope.
+The host does not need this mod. The ground-report correction is experimental and is not a generic anticheat bypass. If this client-only behavior is insufficient for your world, safe authoritative flight/fall protection requires host/server cooperation outside this mod's scope.
 
 ## State management
 
 Only survival mode is eligible. Death, player/world/dimension replacement, disconnect, reconnect and game-mode changes reset the feature. It must be explicitly enabled again. Stale key presses are discarded at context changes.
 
-Disabling restores the two original flight flags. A small client Mixin observes **after** vanilla applies a server abilities packet: it drops the saved override and turns the feature OFF, preserving the server's fresh flags. Creative and spectator abilities remain under vanilla control. Speed and other abilities are never saved or rewritten. Other client mods that also change flight flags have not been verified.
+Disabling restores the two original flight flags. A client Mixin observes **after** vanilla applies a server abilities packet: it drops the saved override and turns the feature OFF, preserving the server's fresh flags. Creative and spectator abilities remain under vanilla control. Speed and other abilities are never saved or rewritten. Other client mods that also change flight flags have not been verified.
 
 ## Low-altitude acceptance test
 
@@ -58,13 +68,13 @@ Use a backed-up disposable private world with the host's permission. Keep valuab
 
 ## Cloud builds and reproducibility
 
-No local development setup is needed: **Actions → Build SurvivalFlight → Run workflow**, then download the successful `SurvivalFlight-26.2-1.0.0` artifact. Pushes, pull requests and manual runs compile, execute regression checks, inspect the JAR and upload its SHA-256.
+No local development setup is needed: **Actions → Build SurvivalFlight → Run workflow**, then download the successful `SurvivalFlight-<commit SHA>` artifact. Pushes, pull requests and manual runs compile, execute regression checks, inspect the JAR and upload its SHA-256.
 
 The committed Gradle wrapper pins **Gradle 9.5.1** and verifies its distribution checksum. Dependencies are fixed: **Loom 1.17.21**, **Loader 0.20.1**, **Fabric API 0.161.0+26.2**, **Minecraft 26.2**, **Java 25**. No mappings dependency is needed for the unobfuscated 26.2 game. Archives use sorted entries and fixed timestamps.
 
 For cloud maintainers: `./gradlew clean build --no-daemon`, then `python3 tools/verify_jar.py`. Build output is in `build/libs/`. Only the small standard Gradle wrapper JAR is committed; game files, caches and build output are ignored.
 
-A `v1.0.0` tag runs the same checks, then publishes an **Experimental pre-release** with the installable JAR, sources JAR, checksum and archive inventory. The release job has write permission; ordinary build jobs have read permission. Actions are pinned to commit SHAs.
+A version tag matching `mod_version` in `gradle.properties` runs the same checks, then publishes an **Experimental pre-release** with the installable JAR, sources JAR, checksum and archive inventory. The release job has write permission; ordinary build jobs have read permission. Actions are pinned to commit SHAs.
 
 See [VALIDATION.md](VALIDATION.md) for actual build/load results, [SECURITY.md](SECURITY.md) for the source audit, and [RELEASE_NOTES.md](RELEASE_NOTES.md) for release limitations.
 
